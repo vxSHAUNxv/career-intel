@@ -638,8 +638,8 @@ footer {
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────
-// Paste your Apps Script URL here (same one used for FBJ tools)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwx2y3XhTI5xkK52AJLmJy7c4nlknRYAmNipgLK32hY4eUrtca3MNnDA-WM9btiechO4Q/exec';
+// Your Anthropic API key — this enables direct browser access
+const API_KEY = 'YOUR_ANTHROPIC_KEY_HERE';
 
 let selectedFile = null;
 let analysisData = null;
@@ -749,12 +749,25 @@ Find exactly 10 real job postings and 3 consultancy opportunities. Reference thi
     stepDone(2);
     stepActive(3);
 
-    const response = await fetch(SCRIPT_URL, {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
-        action: 'analyzeResume',
-        prompt,
-        pdf: base64
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
       })
     });
 
@@ -762,13 +775,20 @@ Find exactly 10 real job postings and 3 consultancy opportunities. Reference thi
     stepActive(4);
 
     const data = await response.json();
-    if (!data.text) throw new Error('No response from API');
+    if (!data.content) throw new Error('No response from API');
+
+    const text = data.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('');
+
+    if (!text) throw new Error('No text in response');
 
     stepDone(4);
     stepActive(5);
 
     // Parse JSON from response
-    let clean = data.text.trim();
+    let clean = text.trim();
     clean = clean.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
     analysisData = JSON.parse(clean);
 
