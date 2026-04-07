@@ -690,54 +690,61 @@ async function analyze() {
     stepDone(1);
     stepActive(2);
 
-    const prompt = `You are a career intelligence analyst. Analyze this resume PDF and return a comprehensive career strategy JSON object.
+    const prompt = `You are a career intelligence analyst with web search capability. Analyze this resume and find REAL currently active job postings.
 
-Return ONLY valid JSON with NO markdown, NO backticks, NO preamble. Just the raw JSON object.
+STEP 1: Read the resume. Identify seniority, industry, core skills, and experience level.
 
-Required structure:
+STEP 2: Search the web for real active job postings matching this person. Search Indeed and LinkedIn for actual current openings. Find real company names, real job titles, real application URLs.
+
+STEP 3: Return your findings as a JSON object.
+
+Return ONLY valid JSON with NO markdown, NO backticks, NO preamble. Just the raw JSON.
+
 {
   "name": "Full name from resume",
-  "title": "Their current or most recent job title",
+  "title": "Current or most recent job title",
   "summary_tags": ["3-5 short skill/industry tags, max 3 words each"],
   "jobs": [
     {
       "rank": 1,
-      "title": "Exact job title to search for",
-      "company_type": "Type of company (e.g. DTC Brand, 3PL, Tech Startup)",
+      "title": "Exact job title from real posting",
+      "company": "Actual company name",
+      "company_type": "Type of company",
       "location": "Remote / City, ST / Hybrid",
       "match_pct": 92,
-      "salary_range": "$150K–$200K",
-      "why_match": "2-3 sentences explaining why this role matches their background specifically",
-      "key_requirements": ["3-4 requirements from this role type that they meet"],
-      "indeed_search": "exact search string to use on Indeed.com",
-      "linkedin_search": "exact search string to use on LinkedIn Jobs",
-      "urgency": "Hot" or "Active" or "Emerging"
+      "salary_range": "$150K–$200K or Unknown",
+      "why_match": "2-3 sentences on why this matches their specific background",
+      "key_requirements": ["3-4 requirements they meet"],
+      "apply_url": "Real URL to the job posting or application page",
+      "indeed_url": "https://www.indeed.com/jobs?q=TITLE&l=LOCATION",
+      "linkedin_url": "https://www.linkedin.com/jobs/search/?keywords=TITLE",
+      "urgency": "Hot or Active or Emerging"
     }
   ],
   "keywords": {
-    "tier1": ["10-12 primary power keywords — titles, core skills, must-have terms for ATS"],
-    "tier2": ["10-12 secondary keywords — tools, platforms, methodologies"],
-    "tier3": ["8-10 supporting keywords — soft skills, certifications, adjacent terms"]
+    "tier1": ["10-12 primary ATS power keywords"],
+    "tier2": ["10-12 tools, platforms, methodologies"],
+    "tier3": ["8-10 soft skills and supporting terms"]
   },
   "search_strings": [
-    "Boolean search string 1 for job boards",
-    "Boolean search string 2 for job boards",
-    "Boolean search string 3 for job boards"
+    "Boolean search string 1",
+    "Boolean search string 2",
+    "Boolean search string 3"
   ],
   "consultancy": [
     {
-      "name": "Name of the consultancy practice/service",
+      "name": "Practice name",
       "type": "Fractional | Project-Based | Retainer | Advisory",
-      "problem_solved": "What specific problem this solves for clients",
-      "target_clients": "Who would hire this service",
-      "services": ["3-4 specific service offerings"],
+      "problem_solved": "Specific problem solved for clients",
+      "target_clients": "Who hires this service",
+      "services": ["3-4 service offerings"],
       "pricing": ["Pricing tier 1", "Pricing tier 2"],
-      "unfair_advantage": "Why their specific background makes them uniquely qualified for this"
+      "unfair_advantage": "Why their background makes them uniquely qualified"
     }
   ]
 }
 
-Generate exactly 10 jobs and exactly 3 consultancy opportunities. Base everything specifically on what you read in THIS resume — not generic advice. Reference their actual companies, roles, and accomplishments.`;
+Find exactly 10 real job postings and 3 consultancy opportunities. Reference this person's actual experience specifically.`;
 
     stepDone(2);
     stepActive(3);
@@ -806,7 +813,7 @@ function renderResults(d) {
       <div class="job-header">
         <div>
           <div class="job-title">${i+1}. ${job.title}</div>
-          <div class="job-company">${job.company_type} · ${job.location}</div>
+          <div class="job-company">${job.company ? job.company + ' · ' : ''}${job.company_type} · ${job.location}</div>
         </div>
         <span class="job-badge ${urgencyClass}">${job.urgency || 'Active'}</span>
       </div>
@@ -821,8 +828,8 @@ function renderResults(d) {
           <span>${match}% match</span>
         </div>
         <div class="job-links">
-          <a href="${indeedUrl}" target="_blank" class="btn-link">Indeed ↗</a>
-          <a href="${linkedinUrl}" target="_blank" class="btn-link primary">LinkedIn ↗</a>
+          <a href="${job.indeed_url || `https://www.indeed.com/jobs?q=${encodeURIComponent(job.title)}`}" target="_blank" class="btn-link">Indeed ↗</a>
+          <a href="${job.apply_url && job.apply_url.startsWith('http') ? job.apply_url : (job.linkedin_url || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.title)}`)}" target="_blank" class="btn-link primary">${job.apply_url && job.apply_url.startsWith('http') ? 'Apply Now ↗' : 'LinkedIn ↗'}</a>
         </div>
       </div>
     </div>`;
