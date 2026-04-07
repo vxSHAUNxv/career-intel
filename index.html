@@ -829,7 +829,10 @@ function renderResults(d) {
         </div>
         <div class="job-links">
           <a href="${job.indeed_url || `https://www.indeed.com/jobs?q=${encodeURIComponent(job.title)}`}" target="_blank" class="btn-link">Indeed ↗</a>
-          <a href="${job.apply_url && job.apply_url.startsWith('http') ? job.apply_url : (job.linkedin_url || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.title)}`)}" target="_blank" class="btn-link primary">${job.apply_url && job.apply_url.startsWith('http') ? 'Apply Now ↗' : 'LinkedIn ↗'}</a>
+          ${job.apply_url && job.apply_url.startsWith('http') && !job.apply_url.includes('/search') && !job.apply_url.includes('?q=')
+            ? `<a href="${job.apply_url}" target="_blank" class="btn-link primary">Apply Now ↗</a>`
+            : `<a href="${job.linkedin_url || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.title)}`}" target="_blank" class="btn-link">Search LinkedIn ↗</a>`
+          }
         </div>
       </div>
     </div>`;
