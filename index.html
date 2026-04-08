@@ -756,7 +756,7 @@ Find exactly 10 real job postings and 3 consultancy opportunities. Reference thi
       method: 'POST',
       body: JSON.stringify({
         action: 'analyzeResume',
-        prompt
+        prompt: resumeText + '\n\n' + prompt
       })
     });
 
@@ -769,9 +769,15 @@ Find exactly 10 real job postings and 3 consultancy opportunities. Reference thi
     stepDone(4);
     stepActive(5);
 
-    // Parse JSON from response
+    // Parse JSON from response — find the JSON object even if wrapped in text
     let clean = data.text.trim();
     clean = clean.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+    // Find the first { and last } to extract just the JSON object
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      clean = clean.substring(firstBrace, lastBrace + 1);
+    }
     analysisData = JSON.parse(clean);
 
     stepDone(5);
